@@ -5,7 +5,7 @@ import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
 
-export default function ProblemWorkspace({ problem }) {
+export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [isRunning, setIsRunning] = useState(false);
