@@ -20,13 +20,13 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const handleRun = async () => {
     setIsRunning(true);
     try {
-      const response = await fetch('/api/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: code || starterCode,
-          language
-        })
+          language,
+        }),
       });
       const result = await response.json();
       setLastSubmissionStatus(`${result.status} in ${result.language}`);
@@ -39,14 +39,14 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           problemId: problem.id,
           code: code || starterCode,
-          status: 'Accepted' // Mock accepted
-        })
+          status: "Accepted",
+        }),
       });
       if (response.ok) {
         setLastSubmissionStatus("Accepted");
@@ -76,21 +76,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           </span>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <span className="inline-flex items-center rounded-full bg-[#edd9b8] px-4 py-2 text-xs font-semibold text-[#4b4033] dark:bg-[#f6ede0] dark:text-[#231406]">
-            Description
-          </span>
-          <span className="inline-flex items-center rounded-full border border-[#deceb7] px-4 py-2 text-xs font-semibold text-[#8a7a67] dark:border-[#40364f] dark:text-[#b5a59c]">
-            Editorial
-          </span>
-          <span className="inline-flex items-center rounded-full border border-[#deceb7] px-4 py-2 text-xs font-semibold text-[#8a7a67] dark:border-[#40364f] dark:text-[#b5a59c]">
-            Solutions
-          </span>
-          <span className="inline-flex items-center rounded-full border border-[#deceb7] px-4 py-2 text-xs font-semibold text-[#8a7a67] dark:border-[#40364f] dark:text-[#b5a59c]">
-            Submissions
-          </span>
-        </div>
-
         <div className="mt-3 flex flex-wrap gap-2">
           {problem.tags.map((t) => (
             <span
@@ -108,26 +93,34 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           {problem.statement}
         </p>
 
-        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Constraints</h3>
+        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+          Constraints
+        </h3>
         <ul className="mt-2 list-disc pl-5 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
           {problem.constraints.map((c) => (
             <li key={c}>{c}</li>
           ))}
         </ul>
 
-        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Examples</h3>
+        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+          Examples
+        </h3>
         <div className="mt-2 grid gap-3">
           {problem.examples.map((ex, i) => (
             <div
               key={`${problem.id}-ex-${i}`}
               className="rounded-xl border border-[#e0d5c2] bg-[#fff8ed] p-4 text-sm dark:border-[#3c3347] dark:bg-[#292331]"
             >
-              <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">Input</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
+              <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                Input
+              </div>
+              <pre className="mt-1 whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
                 {ex.input}
               </pre>
-              <div className="mt-3 font-medium text-[#2b2116] dark:text-[#f6ede0]">Output</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
+              <div className="mt-3 font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                Output
+              </div>
+              <pre className="mt-1 whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
                 {ex.output}
               </pre>
             </div>
@@ -144,19 +137,23 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       minPrimary={260}
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
-      className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage={language} initialCode={code || starterCode} onChange={setCode} onLanguageChange={setLanguage} />}
+      className="h-full"
+      primary={
+        <CodeEditor
+          initialLanguage={language}
+          initialCode={code || starterCode}
+          onChange={setCode}
+          onLanguageChange={setLanguage}
+        />
+      }
       secondary={
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
+        <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
           <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold">
-              <span className="rounded-full bg-[#edd9b8] px-3 py-1 text-[#4b4033] dark:bg-[#f6ede0] dark:text-[#231406]">
-                Test Result
-              </span>
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Testcase</span>
+            <div className="px-4 py-2 text-xs font-semibold">
+              Test Result
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-[#8a7a67] dark:text-[#b5a59c]">
+          <div className="flex-1 overflow-auto px-4 py-5 text-center text-sm text-[#8a7a67] dark:text-[#b5a59c]">
             {lastSubmissionStatus || "You must run your code first."}
           </div>
         </div>
@@ -174,23 +171,23 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           >
             Problems
           </Link>
+
           <button
             type="button"
             onClick={onPrev}
             disabled={!onPrev}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border bg-[#fff8ed] text-sm hover:bg-[#f2e3cc] disabled:opacity-50"
             aria-label="Previous"
-            onClick={onPrev}
           >
             {"<"}
           </button>
+
           <button
             type="button"
             onClick={onNext}
             disabled={!onNext}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] disabled:opacity-50 dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border bg-[#fff8ed] text-sm hover:bg-[#f2e3cc] disabled:opacity-50"
             aria-label="Next"
-            onClick={onNext}
           >
             {">"}
           </button>
@@ -201,38 +198,32 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
             type="button"
             onClick={handleRun}
             disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium hover:bg-[#c4852c] disabled:opacity-50"
           >
             {isRunning ? "Running..." : "Run"}
           </button>
+
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium hover:bg-[#c4852c] disabled:opacity-50"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       </div>
 
-      <div className="hidden lg:block h-225">
-        <SplitPane
-          direction="horizontal"
-          initialPrimary={760}
-          minPrimary={420}
-          minSecondary={420}
-          storageKey={`algoryth.split.problem.${problem.slug}`}
-          primary={leftPanel}
-          secondary={rightPanel}
-          className="h-full"
-        />
-      </div>
-
-      <div className="grid gap-4 lg:hidden">
-        {leftPanel}
-        {rightPanel}
-      </div>
+      <SplitPane
+        direction="horizontal"
+        initialPrimary={760}
+        minPrimary={420}
+        minSecondary={420}
+        storageKey={`algoryth.split.problem.${problem.slug}`}
+        primary={leftPanel}
+        secondary={rightPanel}
+        className="h-full"
+      />
     </section>
   );
 }
