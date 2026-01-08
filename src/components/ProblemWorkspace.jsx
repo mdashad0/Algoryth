@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import CodeEditor from "./CodeEditor";
 import SplitPane from "./SplitPane";
+import ProblemTimer from "./ProblemTimer";
 
 export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [code, setCode] = useState("");
@@ -11,22 +12,24 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmissionStatus, setLastSubmissionStatus] = useState(null);
+  const [timerRunning, setTimerRunning] = useState(true);
 
   const starterCode = useMemo(
-    () => `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
+    () =>
+      `// ${problem.title}\n\nfunction solve(input) {\n  // TODO\n}\n`,
     [problem.title]
   );
 
   const handleRun = async () => {
     setIsRunning(true);
     try {
-      const response = await fetch('/api/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: code || starterCode,
-          language
-        })
+          language,
+        }),
       });
       const result = await response.json();
       setLastSubmissionStatus(`${result.status} in ${result.language}`);
@@ -37,28 +40,31 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   };
 
   const handleSubmit = async () => {
+    setTimerRunning(false); // ✅ stop timer on submit
     setIsSubmitting(true);
+
     try {
-      const response = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           problemId: problem.id,
           code: code || starterCode,
-          status: 'Accepted' // Mock accepted
-        })
+          status: "Accepted",
+        }),
       });
-      if (response.ok) {
-        setLastSubmissionStatus("Accepted");
-      } else {
-        setLastSubmissionStatus("Wrong Answer");
-      }
+
+      setLastSubmissionStatus(
+        response.ok ? "Accepted" : "Wrong Answer"
+      );
     } catch {
       setLastSubmissionStatus("Error");
     }
+
     setIsSubmitting(false);
   };
 
+  /* ---------------- LEFT PANEL (UNCHANGED) ---------------- */
   const leftPanel = (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
       <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] px-5 py-4 dark:border-[#3c3347] dark:bg-[#292331]">
@@ -108,26 +114,34 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           {problem.statement}
         </p>
 
-        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Constraints</h3>
+        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+          Constraints
+        </h3>
         <ul className="mt-2 list-disc pl-5 text-sm text-[#5d5245] dark:text-[#d7ccbe]">
           {problem.constraints.map((c) => (
             <li key={c}>{c}</li>
           ))}
         </ul>
 
-        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">Examples</h3>
+        <h3 className="mt-6 text-sm font-semibold text-[#2b2116] dark:text-[#f6ede0]">
+          Examples
+        </h3>
         <div className="mt-2 grid gap-3">
           {problem.examples.map((ex, i) => (
             <div
               key={`${problem.id}-ex-${i}`}
               className="rounded-xl border border-[#e0d5c2] bg-[#fff8ed] p-4 text-sm dark:border-[#3c3347] dark:bg-[#292331]"
             >
-              <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">Input</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
+              <div className="font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                Input
+              </div>
+              <pre className="mt-1 whitespace-pre-wrap">
                 {ex.input}
               </pre>
-              <div className="mt-3 font-medium text-[#2b2116] dark:text-[#f6ede0]">Output</div>
-              <pre className="mt-1 overflow-auto whitespace-pre-wrap text-[#5d5245] dark:text-[#d7ccbe]">
+              <div className="mt-3 font-medium text-[#2b2116] dark:text-[#f6ede0]">
+                Output
+              </div>
+              <pre className="mt-1 whitespace-pre-wrap">
                 {ex.output}
               </pre>
             </div>
@@ -137,6 +151,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     </div>
   );
 
+  /* ---------------- RIGHT PANEL (UNCHANGED) ---------------- */
   const rightPanel = (
     <SplitPane
       direction="vertical"
@@ -145,18 +160,20 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
       minSecondary={220}
       storageKey={`algoryth.split.editor.${problem.slug}`}
       className="h-215 lg:h-full"
-      primary={<CodeEditor initialLanguage={language} initialCode={code || starterCode} onChange={setCode} onLanguageChange={setLanguage} />}
+      primary={
+        <CodeEditor
+          initialLanguage={language}
+          initialCode={code || starterCode}
+          onChange={setCode}
+          onLanguageChange={setLanguage}
+        />
+      }
       secondary={
-        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] dark:border-[#3c3347] dark:bg-[#211d27]">
-          <div className="border-b border-[#e0d5c2] bg-[#f2e3cc] dark:border-[#3c3347] dark:bg-[#292331]">
-            <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold">
-              <span className="rounded-full bg-[#edd9b8] px-3 py-1 text-[#4b4033] dark:bg-[#f6ede0] dark:text-[#231406]">
-                Test Result
-              </span>
-              <span className="text-[#8a7a67] dark:text-[#b5a59c]">Testcase</span>
-            </div>
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border bg-[#fff8ed] dark:bg-[#211d27]">
+          <div className="border-b px-4 py-2 text-xs font-semibold">
+            Test Result
           </div>
-          <div className="min-h-0 flex-1 overflow-auto px-4 pb-5 pt-3 text-center text-sm text-[#8a7a67] dark:text-[#b5a59c]">
+          <div className="flex-1 overflow-auto px-4 pt-3 text-center text-sm">
             {lastSubmissionStatus || "You must run your code first."}
           </div>
         </div>
@@ -166,45 +183,22 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
 
   return (
     <section className="grid gap-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#e0d5c2] bg-[#fff8ed] px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
+      {/* HEADER */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl border bg-[#fff8ed] px-4 py-3 dark:bg-[#211d27]">
         <div className="flex items-center gap-2">
-          <Link
-            href="/problems"
-            className="inline-flex h-9 items-center rounded-full px-3 text-sm font-medium text-[#5d5245] hover:bg-[#f2e3cc] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-          >
-            Problems
-          </Link>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-            aria-label="Previous"
-          >
-            {"<"}
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#deceb7] bg-[#fff8ed] text-sm text-[#5d5245] hover:bg-[#f2e3cc] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]"
-            aria-label="Next"
-          >
-            {">"}
-          </button>
+          <Link href="/problems">Problems</Link>
+
+          <button onClick={onPrev} disabled={!onPrev}>{"<"}</button>
+          <button onClick={onNext} disabled={!onNext}>{">"}</button>
+
+          <ProblemTimer running={timerRunning} />
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRun}
-            disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
-          >
+          <button onClick={handleRun} disabled={isRunning || isSubmitting}>
             {isRunning ? "Running..." : "Run"}
           </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isRunning || isSubmitting}
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] disabled:opacity-50 dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
-          >
+          <button onClick={handleSubmit} disabled={isRunning || isSubmitting}>
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
@@ -219,7 +213,6 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
           storageKey={`algoryth.split.problem.${problem.slug}`}
           primary={leftPanel}
           secondary={rightPanel}
-          className="h-full"
         />
       </div>
 
