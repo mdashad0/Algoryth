@@ -62,6 +62,8 @@ export default function PrivacyPolicy() {
   return (
     <section className="mx-auto max-w-4xl px-4 py-12">
       <div className="overflow-hidden rounded-2xl border border-[#e0d5c2] bg-white dark:border-[#3c3347] dark:bg-[#211d27]">
+
+        {/* Header */}
         <div className="border-b border-[#e0d5c2] bg-[#f7f0e0] px-6 py-5 dark:border-[#3c3347] dark:bg-[#292331]">
           <h1 className="text-2xl font-semibold tracking-tight">
             Privacy Policy
@@ -88,6 +90,8 @@ export default function PrivacyPolicy() {
             </section>
           ))}
         </div>
+
+
       </div>
     </section>
   );
