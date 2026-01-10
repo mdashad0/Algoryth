@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "../components/ThemeToggle";
+import AuthButton from "../components/AuthButton";
+import { AuthProvider } from "../context/AuthContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,6 +27,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f8f3e6] text-[#2b2116] antialiased transition-colors duration-300 dark:bg-[#18131f] dark:text-[#f6ede0]`}
       >
+        <AuthProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -67,12 +70,7 @@ export default function RootLayout({ children }) {
 
               <div className="ml-auto flex items-center gap-2">
                 <ThemeToggle />
-                <button
-                  type="button"
-                  className="inline-flex h-9 items-center justify-center rounded-full bg-[#d69a44] px-4 text-sm font-medium text-[#2b1a09] hover:bg-[#c4852c] dark:bg-[#f2c66f] dark:text-[#231406] dark:hover:bg-[#e4b857]"
-                >
-                  Sign in
-                </button>
+                <AuthButton />
               </div>
             </div>
 
@@ -106,6 +104,7 @@ export default function RootLayout({ children }) {
             Algoryth · {new Date().getFullYear()}
           </div>
         </footer>
+        </AuthProvider>
       </body>
     </html>
   );
