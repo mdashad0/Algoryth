@@ -3,14 +3,9 @@
 import React, { useEffect, useRef } from 'react';
 import { CheckCircle, Code, Trophy, Zap, Award, BarChart3 } from 'lucide-react';
 
-export default function DashboardStats({ submissions }) {
-  const solvedProblems = submissions.filter(s => s.status === 'Accepted');
-  
-  // Calculate unique solved problems by difficulty
-  const uniqueSolved = {};
-  solvedProblems.forEach(s => {
-    uniqueSolved[s.problemId] = s.difficulty;
-  });
+export default function DashboardStats({ submissions = [], stats = null }) {
+  // Use provided stats if available, otherwise calculate from submissions
+  let displayStats = stats;
 
   // Animated counter for total
   const totalRef = useRef(null);
@@ -44,8 +39,9 @@ export default function DashboardStats({ submissions }) {
 
   // Language frequency
   const languages = {};
-  solvedProblems.forEach(s => {
-    languages[s.language] = (languages[s.language] || 0) + 1;
+  submissions.forEach(s => {
+    const lang = s.language || 'unknown';
+    languages[lang] = (languages[lang] || 0) + 1;
   });
   
   const sortedLanguages = Object.entries(languages)
@@ -99,7 +95,18 @@ export default function DashboardStats({ submissions }) {
             <Code className="h-4 w-4 text-[#8a7a67] dark:text-[#b5a59c]" /> Languages
           </h3>
         </div>
-        {sortedLanguages.length > 0 ? (
+        {displayStats?.languageUsage && Object.keys(displayStats.languageUsage).length > 0 ? (
+          <div className="space-y-3">
+            {Object.entries(displayStats.languageUsage).map(([lang, count]) => (
+              <div key={lang} className="flex items-center justify-between group">
+                <span className="text-sm font-medium text-[#5d5245] dark:text-[#d7ccbe] capitalize">{lang}</span>
+                <span className="text-xs font-mono bg-[#f2e3cc] dark:bg-[#2d2535] px-2 py-0.5 rounded text-[#2b2116] dark:text-[#f6ede0]">
+                  {count}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : sortedLanguages.length > 0 ? (
           <div className="space-y-3">
             {sortedLanguages.map(([lang, count]) => (
               <div key={lang} className="flex items-center justify-between group">

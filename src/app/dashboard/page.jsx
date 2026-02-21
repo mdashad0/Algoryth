@@ -10,24 +10,80 @@ import { motion } from 'framer-motion';
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [submissions, setSubmissions] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('algoryth_submissions');
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(parsed)) setSubmissions(parsed);
-    } catch (e) {
-      console.error('Failed to load submissions', e);
-    } finally {
-      setLoading(false);
+    const fetchSubmissions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get token from localStorage
+        const token = localStorage.getItem('algoryth_token');
+        if (!token) {
+          // No token, try to load from localStorage as fallback
+          const raw = localStorage.getItem('algoryth_submissions');
+          const parsed = raw ? JSON.parse(raw) : [];
+          setSubmissions(Array.isArray(parsed) ? parsed : []);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch from server API
+        const response = await fetch('/api/submissions/history?limit=20', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch submissions: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setSubmissions(data.submissions || []);
+        setStats(data.stats || {});
+      } catch (e) {
+        console.error('Failed to fetch submissions from server:', e);
+        setError('Failed to load submissions');
+
+        // Fallback to localStorage
+        try {
+          const raw = localStorage.getItem('algoryth_submissions');
+          const parsed = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(parsed)) setSubmissions(parsed);
+        } catch (fallbackError) {
+          console.error('Fallback to localStorage also failed:', fallbackError);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!authLoading) {
+      fetchSubmissions();
     }
-  }, []);
+  }, [authLoading]);
 
   if (authLoading || loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (error && !submissions.length) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Using local data from your browser
+          </p>
+        </div>
       </div>
     );
   }
