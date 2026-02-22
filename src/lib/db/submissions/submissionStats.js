@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { connectToDatabase } from '../connect';
 import Submission from '../models/Submission';
 
@@ -72,20 +73,20 @@ export async function trackPerformanceMetrics(submission) {
     const { userId, problemSlug, verdict, executionTime, code } = submission;
 
     if (verdict !== 'Accepted') {
-      return { fastestSolution: false, memoryOptimized: false };
+      return { fastestSolution: false, memoryScore: 50, memoryOptimized: false };
     }
 
-    const [fastestResult] = await Promise.all([
-      checkIfFastestSolution(userId, problemSlug, executionTime),
-    ]);
+    const fastestResult = await checkIfFastestSolution(userId, problemSlug, executionTime);
+    const memoryScore = estimateMemoryUsage(code);
 
     return {
       fastestSolution: fastestResult.isFastest,
-      memoryScore: estimateMemoryUsage(code),
+      memoryScore,
+      memoryOptimized: memoryScore >= 60,
     };
   } catch (error) {
     console.error('Error tracking performance metrics:', error);
-    return { fastestSolution: false, memoryOptimized: false };
+    return { fastestSolution: false, memoryScore: 50, memoryOptimized: false };
   }
 }
 
@@ -99,7 +100,9 @@ export async function getConsecutiveAcceptedCount(userId) {
   try {
     await connectToDatabase();
 
-    const submissions = await Submission.find({ userId })
+    const objectUserId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
+    const submissions = await Submission.find({ userId: objectUserId })
       .sort({ submittedAt: -1 })
       .select('verdict submittedAt')
       .limit(100);
@@ -131,12 +134,15 @@ export async function getFailureCountBeforeSuccess(userId, problemSlug) {
   try {
     await connectToDatabase();
 
+    const objectUserId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
     const submissions = await Submission.find({
-      userId,
+      userId: objectUserId,
       problemSlug,
     })
       .sort({ submittedAt: 1 })
-      .select('verdict');
+      .select('verdict')
+      .limit(200); // Cap at 200 to prevent memory pressure
 
     let failureCount = 0;
     for (const submission of submissions) {
@@ -163,16 +169,25 @@ export async function getProblemsCountByDifficulty(userId) {
   try {
     await connectToDatabase();
 
+    const objectUserId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
     const result = await Submission.aggregate([
       {
         $match: {
-          userId: userId.toString ? userId : new require('mongoose').Types.ObjectId(userId),
+          userId: objectUserId,
           verdict: 'Accepted',
         },
       },
+      // De-duplicate: keep only the first accepted submission per (problemSlug, difficulty)
       {
         $group: {
-          _id: '$difficulty',
+          _id: { problemSlug: '$problemSlug', difficulty: '$difficulty' },
+        },
+      },
+      // Count unique problems by difficulty
+      {
+        $group: {
+          _id: '$_id.difficulty',
           count: { $sum: 1 },
         },
       },
@@ -208,8 +223,10 @@ export async function getLanguagesUsed(userId) {
   try {
     await connectToDatabase();
 
+    const objectUserId = typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId;
+
     const languages = await Submission.distinct('language', {
-      userId,
+      userId: objectUserId,
       verdict: 'Accepted',
     });
 

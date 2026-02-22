@@ -65,6 +65,16 @@ export default function BadgeDisplayMini({ token, maxBadges = 6, showViewAll = t
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800 text-center">
+        <p className="text-sm text-red-700 dark:text-red-300">
+          Failed to load badges. Please try again later.
+        </p>
+      </div>
+    );
+  }
+
   if (badges.length === 0) {
     return (
       <div className="bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800 text-center">

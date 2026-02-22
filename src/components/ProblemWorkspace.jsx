@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { FileText, BookOpen, List, History, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import CodeEditor from "./CodeEditor";
@@ -19,6 +19,8 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
   const [inputError, setInputError] = useState(null);
   const [openHints, setOpenHints] = useState([]);
   const [newBadges, setNewBadges] = useState([]);
+  // Stable dismiss handler - prevents BadgeNotification effect from re-running on every render
+  const handleDismissBadges = useCallback(() => setNewBadges([]), []);
   
   // Tabs State
   const [activeTab, setActiveTab] = useState("Description");
@@ -485,7 +487,7 @@ export default function ProblemWorkspace({ problem, onNext, onPrev }) {
     <section className="flex flex-col gap-4 min-h-0 flex-1">
       <BadgeNotification 
         badges={newBadges}
-        onDismiss={() => setNewBadges([])}
+        onDismiss={handleDismissBadges}
       />
       <div className="flex items-center justify-between rounded-2xl border border-[#e0d5c2] bg-white px-4 py-3 dark:border-[#3c3347] dark:bg-[#211d27]">
         <div className="flex items-center gap-2">

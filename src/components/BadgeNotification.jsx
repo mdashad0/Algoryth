@@ -23,12 +23,15 @@ export default function BadgeNotification({ badges = [], onDismiss }) {
       setVisibleBadges(prev => [...prev, ...newBadges]);
 
       // Auto-dismiss notifications after 6 seconds each
-      newBadges.forEach(badge => {
+      const timers = newBadges.map(badge =>
         setTimeout(() => {
           setVisibleBadges(prev => prev.filter(b => b.id !== badge.id));
           onDismiss?.(badge);
-        }, badge.displayTime + 6000);
-      });
+        }, badge.displayTime + 6000)
+      );
+
+      // Cleanup timers on unmount or deps change
+      return () => timers.forEach(clearTimeout);
     }
   }, [badges, onDismiss]);
 

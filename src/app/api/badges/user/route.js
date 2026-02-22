@@ -33,25 +33,23 @@ export async function GET(request) {
 
     const userId = decoded.userId;
 
-    // Get user's earned badges
+    // Get user's earned badges (no populate — badgeId is a plain String, not an ObjectId ref)
     const userBadges = await UserBadge.find({ userId })
-      .populate('badgeId')
       .sort({ awardedAt: -1 })
       .select('-__v');
 
-    // Get badge details for each earned badge
+    // Fetch badge definitions by their string IDs
     const badgeIds = userBadges.map(ub => ub.badgeId);
-    const badges = await Badge.find({ badgeId: { $in: badgeIds.map(b => b.badgeId || b) } })
-      .select('-__v');
+    const badges = await Badge.find({ badgeId: { $in: badgeIds } }).select('-__v');
 
-    // Combine userBadge and badge data
-    const earnedBadgesWithDetails = userBadges.map(userBadge => {
-      const badgeDetails = badges.find(b => b.badgeId === userBadge.badgeId.badgeId || b._id.toString() === userBadge.badgeId._id.toString());
-      return {
-        ...userBadge.toObject(),
-        badgeDetails,
-      };
-    });
+    // Build a Map for O(1) lookup
+    const badgeMap = new Map(badges.map(b => [b.badgeId, b]));
+
+    // Merge userBadge data with badge details
+    const earnedBadgesWithDetails = userBadges.map(userBadge => ({
+      ...userBadge.toObject(),
+      badgeDetails: badgeMap.get(userBadge.badgeId) || null,
+    }));
 
     return NextResponse.json({
       badges: earnedBadgesWithDetails,

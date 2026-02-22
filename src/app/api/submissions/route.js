@@ -76,7 +76,7 @@ export async function POST(request) {
           await submission.save();
           
           // Update user stats for failed submission
-          await updateUserStatsOnSubmission(userId, verdict);
+          await updateUserStatsOnSubmission(userId, verdict, slug);
         } catch (dbError) {
           console.error('Error saving compilation error to database:', dbError);
         }
@@ -123,7 +123,7 @@ export async function POST(request) {
             });
             
             await submission.save();
-            await updateUserStatsOnSubmission(userId, verdict);
+            await updateUserStatsOnSubmission(userId, verdict, slug);
           } catch (dbError) {
             console.error('Error saving runtime error to database:', dbError);
           }
@@ -168,7 +168,7 @@ export async function POST(request) {
             });
             
             await submission.save();
-            await updateUserStatsOnSubmission(userId, verdict);
+            await updateUserStatsOnSubmission(userId, verdict, slug);
           } catch (dbError) {
             console.error('Error saving wrong answer to database:', dbError);
           }
@@ -213,7 +213,7 @@ export async function POST(request) {
         await submission.save();
 
         // Update user stats and get new badges
-        await updateUserStatsOnSubmission(userId, verdict);
+        await updateUserStatsOnSubmission(userId, verdict, slug);
         const badgeCheckResult = await checkAndAwardBadges(userId);
         badgeResult.newBadges = badgeCheckResult.newBadges || [];
       } catch (dbError) {
@@ -228,14 +228,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('Submission error:', err);
-      } catch (dbError) {
-        console.error('Error saving submission to database:', dbError);
-        // Continue even if database save fails - submission execution is more important
-      }
-    }
-
-    return NextResponse.json({ verdict: "Accepted" });
-  } catch {
     return NextResponse.json(
       { verdict: "Error", message: "Invalid request" },
       { status: 400 }
@@ -249,7 +241,7 @@ export async function POST(request) {
  * @param {string} userId - MongoDB user ID
  * @param {string} verdict - Submission verdict
  */
-async function updateUserStatsOnSubmission(userId, verdict) {
+async function updateUserStatsOnSubmission(userId, verdict, problemSlug) {
   try {
     await connectToDatabase();
 
@@ -262,6 +254,7 @@ async function updateUserStatsOnSubmission(userId, verdict) {
     // Initialize or increment stats
     const updates = {
       totalSubmissions: user.totalSubmissions + 1,
+      totalAcceptedCount: user.totalAcceptedCount, // Initialize before conditional to avoid NaN
       updatedAt: new Date(),
     };
 
@@ -269,13 +262,13 @@ async function updateUserStatsOnSubmission(userId, verdict) {
     if (verdict === 'Accepted') {
       updates.totalAcceptedCount = user.totalAcceptedCount + 1;
 
-      // Check if this is first-try (1 submission total for this problem)
+      // Check if this is first-try (no prior submissions for this specific problem)
       const existingSubmissions = await Submission.countDocuments({
         userId,
-        problemSlug: { $exists: true }, // Make sure we have problem info
+        problemSlug, // Scope to current problem only
       });
 
-      // If this is the first accepted solution in a while, increment first-try count
+      // If this is the only submission for this problem (first-try), increment count
       if (existingSubmissions === 1) {
         updates.perfectAcceptanceCount = user.perfectAcceptanceCount + 1;
       }

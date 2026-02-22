@@ -217,6 +217,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 gap-2">
               <Link href="/problems" className="flex items-center gap-2 rounded-xl border border-[#deceb7] bg-white p-3 text-sm font-medium text-[#5d5245] hover:bg-[#f6e9d2] dark:border-[#40364f] dark:bg-[#221d2b] dark:text-[#d7ccbe] dark:hover:bg-[#2d2535]">
                 <span>Browse Problems</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
           {/* Quick Access */}
           <motion.div
             whileHover={{ scale: 1.04 }}

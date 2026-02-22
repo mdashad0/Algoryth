@@ -49,7 +49,9 @@ export async function GET(request) {
       earnedCount: earnedBadges.length,
       upcomingCount: upcomingBadges.length,
       totalBadges: allBadges.length,
-      earnedPercentage: ((earnedBadges.length / allBadges.length) * 100).toFixed(2),
+      earnedPercentage: allBadges.length > 0
+        ? ((earnedBadges.length / allBadges.length) * 100).toFixed(2)
+        : '0.00',
       upcomingBadges: upcomingBadges.slice(0, 5), // Next 5 badges
     });
   } catch (error) {
