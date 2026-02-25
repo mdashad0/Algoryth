@@ -18,6 +18,15 @@ export default function DashboardStats({ submissions = [], stats = null }) {
   // Animated counter for total
   const totalRef = useRef(null);
   const [displayTotal, setDisplayTotal] = React.useState(0);
+  
+  // Calculate unique solved problems
+  const uniqueSolved = {};
+  submissions.forEach(s => {
+    if (s.status === 'Accepted') {
+      uniqueSolved[s.problemId] = s.difficulty || 'Medium'; // Default to Medium if not provided
+    }
+  });
+
   const total = Object.keys(uniqueSolved).length;
   const easy = Object.values(uniqueSolved).filter(d => d === 'Easy').length;
   const medium = Object.values(uniqueSolved).filter(d => d === 'Medium').length;
